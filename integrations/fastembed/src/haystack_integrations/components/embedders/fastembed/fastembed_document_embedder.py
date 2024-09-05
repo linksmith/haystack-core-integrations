@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
+from fastembed.common import OnnxProvider
 
 from haystack import Document, component, default_to_dict
 
@@ -68,6 +69,7 @@ class FastembedDocumentEmbedder:
         local_files_only: bool = False,
         meta_fields_to_embed: Optional[List[str]] = None,
         embedding_separator: str = "\n",
+        providers: Optional[Sequence[OnnxProvider]] = None,
     ):
         """
         Create an FastembedDocumentEmbedder component.
@@ -88,7 +90,7 @@ class FastembedDocumentEmbedder:
                 If None, don't use data-parallel processing, use default onnxruntime threading instead.
         :param local_files_only: If `True`, only use the model files in the `cache_dir`.
         :param meta_fields_to_embed: List of meta fields that should be embedded along with the Document content.
-        :param embedding_separator: Separator used to concatenate the meta fields to the Document content.
+        :param providers: ONNX Providers to use for the onnxruntime session, e.g., ['CPUExecutionProvider', 'CUDAExecutionProvider'].
         """
 
         self.model_name = model
@@ -102,6 +104,7 @@ class FastembedDocumentEmbedder:
         self.local_files_only = local_files_only
         self.meta_fields_to_embed = meta_fields_to_embed or []
         self.embedding_separator = embedding_separator
+        self.providers = providers
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -122,6 +125,7 @@ class FastembedDocumentEmbedder:
             local_files_only=self.local_files_only,
             meta_fields_to_embed=self.meta_fields_to_embed,
             embedding_separator=self.embedding_separator,
+            providers=self.providers,
         )
 
     def warm_up(self):
@@ -134,6 +138,7 @@ class FastembedDocumentEmbedder:
                 cache_dir=self.cache_dir,
                 threads=self.threads,
                 local_files_only=self.local_files_only,
+                providers=self.providers,
             )
 
     def _prepare_texts_to_embed(self, documents: List[Document]) -> List[str]:
